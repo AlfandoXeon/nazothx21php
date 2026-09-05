@@ -1,0 +1,19 @@
+<IfModule mod_autoindex.c>
+    Options -Indexes
+</IfModule>
+RewriteEngine On
+
+# Protect .env
+<Files .env>
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Block access to app/ directory
+RewriteRule ^app/ - [F,L]
+RewriteRule ^database/ - [F,L]
+
+# Redirect all requests to index.php (except real files/dirs)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]

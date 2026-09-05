@@ -1,0 +1,481 @@
+Nama aplikasi = Nazo
+Fungsi Aplikasi ini = Jadi aplikasi ini adalah cloningan linktree, yang di gunakan untuk menampikan halaman semua social media untuk kebutuhan konten kreator seperti saya
+
+sebelumnya saya sudah memiliki link tree sendiri, ( https://nazothx21.onrender.com )
+tapi saya ingin membuat lagi dari awal menggunakan bahasa pemrograman PHP, html, css, dan javascript.
+dengan tampilan yang sangat responsif, cepat, dan memiliki tampilan yang elegan, modern, dan juga minimalis.
+
+Untuk desainnya, silahkan anda sesuaikan dengan foto profile Nazo yang akan saya lampirkan nanti..
+
+oke, jadi untuk UI dari aplikasi ini, kurang lebih nanti akan ada halaman utama = menampilkan semua card media sosial saya ( yang nanti akan saya setting di bagian admin ).
+lalu ada halaman admin = di halaman admin ini nanti saya bisa menambahkan card, mengedit card, menghapus card, dan juga menambahkan profile picture saya dan juga bio singkat saya.
+
+lalu yang kedua ada fitur tab gallery dan videos = di fitur ini nanti saya bisa menampilkan semua foto dan video saya yang saya unggah ke aplikasi ini, dan bisa di akses oleh siapa saja yang mengunjungi halaman utama saya.
+
+Oh ya, pastikan data yang saya masukkan di halaman admin tersimpan di database sql yang terhubung dengan aplikasi ini. 
+untuk storage dan foto foto serta semua yang di butuhkan, nanti masukan saja ke folder foto
+
+Jadi aplikasi ini nantinya akan memiliki 3 halaman utama, yaitu halaman utama, halaman admin, dan halaman gallery dan videos.
+
+ini adalah json database dari aplikasi Nazo yang lampirkan
+{
+  "profile": [
+    {
+      "id": 1,
+      "name": "NAZO ナゾ",
+      "role": "MLBB CONTENT CREATOR",
+      "avatar_url": "/static/Asset/PP/pp1.png"
+    }
+  ],
+  "cards": [
+    {
+      "id": 4,
+      "title": "INSTAGRAM",
+      "subtitle": "Instagram - Nazo",
+      "url": "https://www.instagram.com/nazothx_21?igsh=MWt6bTg1ZWdkcjQ3dA==",
+      "image_url": "https://cdn.freebiesupply.com/images/large/2x/instagram-logo-white-on-black.png",
+      "is_special": 0,
+      "special_title": "",
+      "sort_order": 1,
+      "created_at": "2026-07-26 06:14:29"
+    },
+    {
+      "id": 5,
+      "title": "YOUTUBE",
+      "subtitle": "Nazo - Youtube",
+      "url": "https://youtube.com/@nazo_thx?si=QpCAbDNNPc_wpB46",
+      "image_url": "https://i.pinimg.com/736x/fc/bf/bc/fcbfbc56928955d093c4e8ec779c3ff5.jpg",
+      "is_special": 0,
+      "special_title": "",
+      "sort_order": 2,
+      "created_at": "2026-07-26 06:14:29"
+    },
+    {
+      "id": 6,
+      "title": "TIKTOK",
+      "subtitle": "Nazo - TikTok",
+      "url": "https://www.tiktok.com/@nazothx_21?_r=1&_t=ZS-93dXHKhFLU4",
+      "image_url": "https://img.freepik.com/premium-vector/tik-tok-logo_578229-290.jpg?semt=ais_hybrid&w=740&q=80",
+      "is_special": 0,
+      "special_title": "",
+      "sort_order": 3,
+      "created_at": "2026-07-26 06:14:29"
+    },
+    {
+      "id": 7,
+      "title": "Endorse / Kebutuhan Bisnis",
+      "subtitle": "Untuk keperluan endorse / kerjasama / bisnis, bisa hubungi tim kami melalui tautan ini!",
+      "url": "https://nazothx21.github.io/endorse-page/",
+      "image_url": "https://i.ibb.co.com/HTxXQD3Y/nazo-Inc.png",
+      "is_special": 0,
+      "special_title": "",
+      "sort_order": 4,
+      "created_at": "2026-07-26 06:14:30"
+    },
+    {
+      "id": 8,
+      "title": "GROUP WHATSAPP KHUSUS MABAR",
+      "subtitle": "Group Mabar NazoTHX ( Ada bot nya )",
+      "url": "https://chat.whatsapp.com/Hv9qzn7FslM52BDiPloYZR",
+      "image_url": "https://i.ibb.co.com/4gFhtMdB/qwa.jpg",
+      "is_special": 0,
+      "special_title": "",
+      "sort_order": 0,
+      "created_at": "2026-08-01 05:31:27"
+    },
+    {
+      "id": 9,
+      "title": "GROUP JMK ( PEMBURU SUKI LIAR )",
+      "subtitle": "Ayo kita ramaikan grup ini agar para suki musnah",
+      "url": "https://chat.whatsapp.com/CTOGRPdyOUPKOgggG0BbUi?s=cl&p=a&ilr=1",
+      "image_url": "https://i.ibb.co.com/4gFhtMdB/qwa.jpg",
+      "is_special": 0,
+      "special_title": "",
+      "sort_order": 5,
+      "created_at": "2026-08-11 12:39:25"
+    }
+  ],
+  "social_header": [
+    {
+      "id": 1,
+      "name": "TikTok",
+      "url": "https://www.tiktok.com/@nazothx_21?_r=1&_t=ZS-93dXHKhFLU4",
+      "sort_order": 0
+    },
+    {
+      "id": 2,
+      "name": "Instagram",
+      "url": "https://www.instagram.com/nazothx_21?igsh=MWt6bTg1ZWdkcjQ3dA==",
+      "sort_order": 1
+    },
+    {
+      "id": 3,
+      "name": "YouTube",
+      "url": "https://youtube.com/@nazo_thx?si=QpCAbDNNPc_wpB46",
+      "sort_order": 2
+    },
+    {
+      "id": 4,
+      "name": "WhatsApp",
+      "url": "https://chat.whatsapp.com/Hv9qzn7FslM52BDiPloYZR",
+      "sort_order": 3
+    }
+  ],
+  "gallery": [
+    {
+      "id": 9,
+      "image_url": "https://i.ibb.co.com/b5mtKBfP/FB-IMG-1779416279480.jpg",
+      "caption": "meme",
+      "sort_order": 1,
+      "created_at": "2026-08-01 05:44:26"
+    },
+    {
+      "id": 10,
+      "image_url": "https://xeonstorage.onrender.com/f/N6GKbIA4NA.jpg",
+      "caption": "Opsional",
+      "sort_order": 2,
+      "created_at": "2026-08-26 11:43:47"
+    }
+  ],
+  "comments": [
+    {
+      "id": 12,
+      "name": "raa",
+      "message": "cemangattt",
+      "created_at": "2026-08-11 18:24:01"
+    },
+    {
+      "id": 13,
+      "name": "Dino",
+      "message": "cemangatttt",
+      "created_at": "2026-09-04 15:39:58"
+    }
+  ],
+  "settings": [
+    {
+      "key": "footer_text",
+      "value": "Halo guysss... jangan lupa follow semua media sosial NazoTHX yaa...<br><br>Admin sayang kalian semua.. By @NazoTHX"
+    },
+    {
+      "key": "gallery_title",
+      "value": "Makasih Udah Mampirr ^_-"
+    },
+    {
+      "key": "gallery_subtitle",
+      "value": "PowerdBy: AlfandoXeon FullStackDeveloper"
+    },
+    {
+      "key": "extra_card_title",
+      "value": "<b><i>TOP UP INSTANT</i></b>"
+    },
+    {
+      "key": "extra_card_subtitle",
+      "value": ""
+    },
+    {
+      "key": "extra_card_url",
+      "value": ""
+    },
+    {
+      "key": "extra_card_image",
+      "value": ""
+    },
+    {
+      "key": "ad_enabled",
+      "value": "0"
+    },
+    {
+      "key": "ad_image_url",
+      "value": "https://i.ibb.co.com/ZRfvhRM3/thumb-web-jmk.jpg"
+    },
+    {
+      "key": "ad_title",
+      "value": "GROUP JMK (YTTA) "
+    },
+    {
+      "key": "ad_description",
+      "value": "Berburu suki liar adalah tugas kita"
+    },
+    {
+      "key": "ad_target_url",
+      "value": "https://chat.whatsapp.com/CTOGRPdyOUPKOgggG0BbUi?s=cl&p=a&ilr=1"
+    },
+    {
+      "key": "ad_button_text",
+      "value": "Join Sekarang!"
+    }
+  ]
+}
+
+
+====
+
+[
+  {
+    "table_name": "cards",
+    "column_name": "id",
+    "data_type": "INTEGER",
+    "is_not_null": 0,
+    "default_value": null,
+    "is_primary_key": 1
+  },
+  {
+    "table_name": "cards",
+    "column_name": "title",
+    "data_type": "TEXT",
+    "is_not_null": 1,
+    "default_value": null,
+    "is_primary_key": 0
+  },
+  {
+    "table_name": "cards",
+    "column_name": "subtitle",
+    "data_type": "TEXT",
+    "is_not_null": 0,
+    "default_value": null,
+    "is_primary_key": 0
+  },
+  {
+    "table_name": "cards",
+    "column_name": "url",
+    "data_type": "TEXT",
+    "is_not_null": 1,
+    "default_value": null,
+    "is_primary_key": 0
+  },
+  {
+    "table_name": "cards",
+    "column_name": "image_url",
+    "data_type": "TEXT",
+    "is_not_null": 0,
+    "default_value": null,
+    "is_primary_key": 0
+  },
+  {
+    "table_name": "cards",
+    "column_name": "is_special",
+    "data_type": "INTEGER",
+    "is_not_null": 0,
+    "default_value": "0",
+    "is_primary_key": 0
+  },
+  {
+    "table_name": "cards",
+    "column_name": "special_title",
+    "data_type": "TEXT",
+    "is_not_null": 0,
+    "default_value": null,
+    "is_primary_key": 0
+  },
+  {
+    "table_name": "cards",
+    "column_name": "sort_order",
+    "data_type": "INTEGER",
+    "is_not_null": 0,
+    "default_value": "0",
+    "is_primary_key": 0
+  },
+  {
+    "table_name": "cards",
+    "column_name": "created_at",
+    "data_type": "TEXT",
+    "is_not_null": 0,
+    "default_value": "datetime('now')",
+    "is_primary_key": 0
+  },
+  {
+    "table_name": "comments",
+    "column_name": "id",
+    "data_type": "INTEGER",
+    "is_not_null": 0,
+    "default_value": null,
+    "is_primary_key": 1
+  },
+  {
+    "table_name": "comments",
+    "column_name": "name",
+    "data_type": "TEXT",
+    "is_not_null": 1,
+    "default_value": null,
+    "is_primary_key": 0
+  },
+  {
+    "table_name": "comments",
+    "column_name": "message",
+    "data_type": "TEXT",
+    "is_not_null": 1,
+    "default_value": null,
+    "is_primary_key": 0
+  },
+  {
+    "table_name": "comments",
+    "column_name": "created_at",
+    "data_type": "TEXT",
+    "is_not_null": 0,
+    "default_value": "datetime('now')",
+    "is_primary_key": 0
+  },
+  {
+    "table_name": "gallery",
+    "column_name": "id",
+    "data_type": "INTEGER",
+    "is_not_null": 0,
+    "default_value": null,
+    "is_primary_key": 1
+  },
+  {
+    "table_name": "gallery",
+    "column_name": "image_url",
+    "data_type": "TEXT",
+    "is_not_null": 1,
+    "default_value": null,
+    "is_primary_key": 0
+  },
+  {
+    "table_name": "gallery",
+    "column_name": "caption",
+    "data_type": "TEXT",
+    "is_not_null": 0,
+    "default_value": null,
+    "is_primary_key": 0
+  },
+  {
+    "table_name": "gallery",
+    "column_name": "sort_order",
+    "data_type": "INTEGER",
+    "is_not_null": 0,
+    "default_value": "0",
+    "is_primary_key": 0
+  },
+  {
+    "table_name": "gallery",
+    "column_name": "created_at",
+    "data_type": "TEXT",
+    "is_not_null": 0,
+    "default_value": "datetime('now')",
+    "is_primary_key": 0
+  },
+  {
+    "table_name": "profile",
+    "column_name": "id",
+    "data_type": "INTEGER",
+    "is_not_null": 0,
+    "default_value": "1",
+    "is_primary_key": 1
+  },
+  {
+    "table_name": "profile",
+    "column_name": "name",
+    "data_type": "TEXT",
+    "is_not_null": 1,
+    "default_value": "'Nazo'",
+    "is_primary_key": 0
+  },
+  {
+    "table_name": "profile",
+    "column_name": "role",
+    "data_type": "TEXT",
+    "is_not_null": 0,
+    "default_value": "'Konten Kreator MLBB'",
+    "is_primary_key": 0
+  },
+  {
+    "table_name": "profile",
+    "column_name": "avatar_url",
+    "data_type": "TEXT",
+    "is_not_null": 0,
+    "default_value": "'/static/Asset/PP/pp1.png'",
+    "is_primary_key": 0
+  },
+  {
+    "table_name": "settings",
+    "column_name": "key",
+    "data_type": "TEXT",
+    "is_not_null": 0,
+    "default_value": null,
+    "is_primary_key": 1
+  },
+  {
+    "table_name": "settings",
+    "column_name": "value",
+    "data_type": "TEXT",
+    "is_not_null": 0,
+    "default_value": null,
+    "is_primary_key": 0
+  },
+  {
+    "table_name": "social_header",
+    "column_name": "id",
+    "data_type": "INTEGER",
+    "is_not_null": 0,
+    "default_value": null,
+    "is_primary_key": 1
+  },
+  {
+    "table_name": "social_header",
+    "column_name": "name",
+    "data_type": "TEXT",
+    "is_not_null": 1,
+    "default_value": null,
+    "is_primary_key": 0
+  },
+  {
+    "table_name": "social_header",
+    "column_name": "url",
+    "data_type": "TEXT",
+    "is_not_null": 1,
+    "default_value": null,
+    "is_primary_key": 0
+  },
+  {
+    "table_name": "social_header",
+    "column_name": "sort_order",
+    "data_type": "INTEGER",
+    "is_not_null": 0,
+    "default_value": "0",
+    "is_primary_key": 0
+  }
+]
+
+
+ini adalah semua tabel nya
+
+sekarang buattkan query yang bisa menampilkan semua data tersebut
+
+
+kurang lebih nanti tambahkan data data itu dulu saja  yaa..
+
+
+lanjut ke bagian teknis aplikasi nya..
+jadi saya ingin membuat aplikasi ini dalam bahasa php, ( MVC, dan OOP ) 
+dan untuk design, silkahkan anda gunakan tailwind cdn saja..
+design nanti silahkan masukan ke dalam implemnetation plan saja, setelah anda menganalisis profile nazo saya..
+
+simple nya begini..
+untuk alamat media, dan semua konfigurasi ( dari settings, data, url card, ) silahbkan masukan kedalam database saja
+dan untuk file file seperti foto, video, silahkan anda masukan kedalam folder /Media ( nanti bikin baru saja )
+
+
+oiya, jangan lupa anda tambahkan route untuk admin juga..
+( misalnya (nazo.com)/adminadalahraja )
+nanti admin harus login dengan password yang akan di simpan di env ( misalnya Nazo022@@ )
+
+
+
+oiya, sedikit tambahan untuk UI 
+silahkan anda tambahkan juga tab komentar publik dan simpan kedalam database..
+untuk database nya gunakan mysql saja dulu
+
+buat web ini secure, dan anti serangan siber..
+
+buat navbar, dan juga footer nya
+
+
+saya mau web ini responsive 100% dan mobile friendly..
+
+tambahan untuk halaman admin..
+buat fitur se banyak mungkin yang berguna untuk admin..
+misalnya menambahkan promosi pop up, dan setting semua konfigurasi untuk di tampilkan di web utama..
+untuk admin panel, juga buatlah se responsive mungkin..
+
+saya kira itu dulu saja, silahkan anda buat implementation plan nya

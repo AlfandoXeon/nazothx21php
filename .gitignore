@@ -1,0 +1,23 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+envnyainfintyfree*
+
+# Sensitive and personal database dumps
+database/seed.sql
+database/infinityfree_export.sql
+
+# Uploaded media (keep folder structure via .gitkeep)
+Media/avatars/*
+!Media/avatars/.gitkeep
+Media/gallery/*
+!Media/gallery/.gitkeep
+Media/videos/*
+!Media/videos/.gitkeep
+
+# System and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
