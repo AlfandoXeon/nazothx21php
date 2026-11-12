@@ -157,39 +157,60 @@ if (empty($avatarUrl)) {
     <?php endif; ?>
 </section>
 
-<!-- ── KOMENTAR ───────────────────────────────────────────────── -->
+<!-- ── KOMENTAR PREVIEW ──────────────────────────────────────── -->
 <section id="komentar" class="max-w-lg mx-auto px-4 pb-16">
-    <div class="mb-6" data-aos="fade-up">
-        <h2 class="font-condensed font-bold text-2xl tracking-widest text-white">KOMENTAR</h2>
-        <div class="w-12 h-0.5 mt-1" style="background:#f59e0b"></div>
+    <div class="flex items-center justify-between mb-6" data-aos="fade-up">
+        <div>
+            <h2 class="font-condensed font-bold text-2xl tracking-widest text-white">KOMENTAR TERBARU</h2>
+            <div class="w-12 h-0.5 mt-1" style="background:#f59e0b"></div>
+        </div>
+        <?php if (!empty($totalComments) && $totalComments > 0): ?>
+        <a href="<?= $base ?>/komentar" 
+           class="inline-flex items-center gap-1.5 text-xs text-amber-500 hover:text-amber-400 font-semibold px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 hover:border-amber-500/40 transition-all">
+            <span>Lihat Semua (<?= (int)$totalComments ?>)</span>
+            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+        </a>
+        <?php endif; ?>
     </div>
 
-    <!-- Flash Message -->
+    <!-- Alert via JS Flash -->
     <?php if (!empty($flash)): ?>
     <?php
-        [$type, $msg] = explode(':', $flash, 2);
-        $flashBg = $type === 'success' ? 'bg-green-500/10 border-green-500/30 text-green-400' : 'bg-red-500/10 border-red-500/30 text-red-400';
+        [$flashType, $flashMsg] = explode(':', $flash, 2);
     ?>
-    <div class="mb-4 px-4 py-3 rounded-lg border text-sm <?= $flashBg ?>">
-        <?= Security::e($msg) ?>
-    </div>
+    <script>
+        window.addEventListener('DOMContentLoaded', function() {
+            alert(<?= json_encode($flashMsg) ?>);
+        });
+    </script>
     <?php endif; ?>
 
     <!-- Form -->
-    <form method="POST" action="<?= $base ?>/komentar" class="mb-8 space-y-3" data-aos="fade-up" data-aos-delay="60">
+    <form id="comment-form-home" method="POST" action="<?= $base ?>/komentar" class="mb-8 space-y-3" data-aos="fade-up" data-aos-delay="60">
         <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken) ?>">
-        <input type="text" name="name" placeholder="Nama kamu" required maxlength="100"
-               class="w-full bg-dark-700 border border-white/5 rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-amber-500/50 transition-colors">
-        <textarea name="message" placeholder="Tulis komentar..." required maxlength="500" rows="3"
-                  class="w-full bg-dark-700 border border-white/5 rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-amber-500/50 transition-colors resize-none"></textarea>
-        <button type="submit"
+        <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($base . '/#komentar') ?>">
+        
+        <div>
+            <input type="text" id="home_name" name="name" placeholder="Nama kamu" required maxlength="100"
+                   class="w-full bg-dark-700 border border-white/5 rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-amber-500/50 transition-colors">
+        </div>
+
+        <div>
+            <textarea id="home_message" name="message" placeholder="Tulis komentar (maksimal 1000 karakter)..." required maxlength="1000" rows="3"
+                      class="w-full bg-dark-700 border border-white/5 rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-amber-500/50 transition-colors resize-none"></textarea>
+            <div class="flex justify-end mt-1">
+                <span id="home_counter" class="text-[11px] text-gray-500">0 / 1000</span>
+            </div>
+        </div>
+
+        <button type="submit" id="home_submit_btn"
                 class="w-full py-2.5 rounded-lg text-sm font-semibold text-black transition-all duration-200 hover:opacity-90 active:scale-[.98]"
                 style="background:#f59e0b">
             Kirim Komentar
         </button>
     </form>
 
-    <!-- Comment List -->
+    <!-- Comment List Preview -->
     <div class="space-y-3">
         <?php if (empty($comments)): ?>
         <p class="text-center text-gray-700 text-sm py-6">Belum ada komentar. Jadilah yang pertama!</p>
@@ -213,6 +234,16 @@ if (empty($avatarUrl)) {
             </p>
         </div>
         <?php endforeach; ?>
+
+        <?php if (!empty($totalComments) && $totalComments > count($comments)): ?>
+        <div class="pt-4 text-center" data-aos="fade-up">
+            <a href="<?= $base ?>/komentar" 
+               class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition-all duration-200">
+                <span>Buka Tab Komentar Lengkap (<?= (int)$totalComments ?>)</span>
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </a>
+        </div>
+        <?php endif; ?>
     </div>
 </section>
 
@@ -287,5 +318,55 @@ function fallbackCopy(text, cb) {
         }
     }
     requestAnimationFrame(updateCount);
+})();
+
+// Front-End Validation untuk Komentar
+(function() {
+    const form = document.getElementById('comment-form-home');
+    const msgInput = document.getElementById('home_message');
+    const nameInput = document.getElementById('home_name');
+    const counter = document.getElementById('home_counter');
+
+    if (msgInput && counter) {
+        msgInput.addEventListener('input', function() {
+            const len = this.value.length;
+            counter.textContent = `${len} / 1000`;
+            if (len > 1000) {
+                counter.classList.add('text-red-500');
+                counter.classList.remove('text-gray-500');
+            } else {
+                counter.classList.remove('text-red-500');
+                counter.classList.add('text-gray-500');
+            }
+        });
+    }
+
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const name = (nameInput ? nameInput.value : '').trim();
+            const msg = (msgInput ? msgInput.value : '').trim();
+
+            if (!name) {
+                e.preventDefault();
+                alert('Nama tidak boleh kosong.');
+                nameInput && nameInput.focus();
+                return;
+            }
+
+            if (!msg) {
+                e.preventDefault();
+                alert('Komentar tidak boleh kosong.');
+                msgInput && msgInput.focus();
+                return;
+            }
+
+            if (msg.length > 1000) {
+                e.preventDefault();
+                alert('Komentar tidak boleh lebih dari 1000 karakter dalam 1 kali kirim. Saat ini: ' + msg.length + ' karakter.');
+                msgInput && msgInput.focus();
+                return;
+            }
+        });
+    }
 })();
 </script>

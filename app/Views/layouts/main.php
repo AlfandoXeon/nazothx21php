@@ -122,37 +122,34 @@ $pageUrl   = htmlspecialchars($base . ($_SERVER['REQUEST_URI'] ?? '/'));
             justify-content: center;
         }
 
-        /* Spinning gradient ring */
+        /* Subtle ambient glow ring (disederhanakan agar bersih & elegan) */
         .avatar-wrapper::before {
             content: '';
             position: absolute;
-            inset: -4px;
+            inset: -3px;
             border-radius: 50%;
             background: conic-gradient(
                 from 0deg,
-                transparent 0%,
-                #f59e0b 25%,
-                #fbbf24 40%,
-                transparent 55%,
-                transparent 75%,
-                #d97706 85%,
-                transparent 100%
+                rgba(245, 158, 11, 0.15) 0%,
+                rgba(245, 158, 11, 0.75) 45%,
+                rgba(251, 191, 36, 0.9) 50%,
+                rgba(245, 158, 11, 0.2) 65%,
+                rgba(245, 158, 11, 0.15) 100%
             );
-            animation: aura-spin 3s linear infinite;
+            animation: aura-spin 10s linear infinite;
             z-index: 0;
+            opacity: 0.7;
         }
 
-        /* Pulsing outer glow */
+        /* Soft subtle outer glow */
         .avatar-wrapper::after {
             content: '';
             position: absolute;
-            inset: -8px;
+            inset: -5px;
             border-radius: 50%;
             background: transparent;
-            box-shadow:
-                0 0 20px 6px rgba(245,158,11,0.35),
-                0 0 50px 10px rgba(245,158,11,0.15);
-            animation: aura-pulse 2.5s ease-in-out infinite alternate;
+            box-shadow: 0 0 16px 2px rgba(245, 158, 11, 0.22);
+            animation: aura-pulse 4s ease-in-out infinite alternate;
             z-index: 0;
         }
 
@@ -162,14 +159,12 @@ $pageUrl   = htmlspecialchars($base . ($_SERVER['REQUEST_URI'] ?? '/'));
 
         @keyframes aura-pulse {
             from {
-                box-shadow:
-                    0 0 15px 4px rgba(245,158,11,0.25),
-                    0 0 40px 8px rgba(245,158,11,0.10);
+                box-shadow: 0 0 12px 2px rgba(245, 158, 11, 0.15);
+                opacity: 0.6;
             }
             to {
-                box-shadow:
-                    0 0 30px 10px rgba(245,158,11,0.45),
-                    0 0 70px 18px rgba(245,158,11,0.20);
+                box-shadow: 0 0 20px 4px rgba(245, 158, 11, 0.28);
+                opacity: 0.9;
             }
         }
 

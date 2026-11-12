@@ -1,14 +1,12 @@
 <?php use App\Core\Security; ?>
 
-<!-- Page Header -->
-<div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+<div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
-        <h1 class="font-condensed font-bold text-3xl text-white tracking-wide">Dashboard</h1>
-        <p class="text-gray-600 text-sm mt-1">Selamat datang di panel admin NAZO.</p>
+        <h1 class="font-condensed font-bold text-2xl sm:text-3xl text-white tracking-wide">Dashboard</h1>
     </div>
     <div class="flex items-center gap-2">
         <a href="<?= rtrim($_ENV['APP_URL'] ?? '', '/') ?>/" target="_blank" rel="noopener"
-           class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-dark-800 border border-white/10 text-gray-300 hover:text-white hover:border-amber-500/50 transition-all">
+           class="w-full sm:w-auto justify-center inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-dark-800 border border-white/10 text-gray-300 hover:text-white hover:border-amber-500/50 transition-all">
             <i data-lucide="external-link" class="w-3.5 h-3.5 text-amber-500"></i>
             <span>Buka Website</span>
         </a>
@@ -19,20 +17,19 @@
 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
     <?php
     $stats = [
-        ['label'=>'Total Kunjungan', 'value'=>$totalVisitors ?? 0, 'icon'=>'users',          'color'=>'#f59e0b'],
-        ['label'=>'Hari Ini',        'value'=>$todayVisitors ?? 0, 'icon'=>'user-check',     'color'=>'#10b981'],
-        ['label'=>'Klik Link',       'value'=>$totalClicks ?? 0,   'icon'=>'mouse-pointer',  'color'=>'#3b82f6'],
-        ['label'=>'Active Cards',    'value'=>$totalCards,         'icon'=>'link-2',         'color'=>'#8b5cf6'],
-        ['label'=>'Media Gallery',   'value'=>$totalPhotos + $totalVideos, 'icon'=>'image',  'color'=>'#ec4899'],
-        ['label'=>'Komentar',        'value'=>$totalComments,      'icon'=>'message-square', 'color'=>'#06b6d4'],
+        ['label'=>'Total Kunjungan', 'value'=>$totalVisitors ?? 0, 'icon'=>'users'],
+        ['label'=>'Hari Ini',        'value'=>$todayVisitors ?? 0, 'icon'=>'user-check'],
+        ['label'=>'Klik Link',       'value'=>$totalClicks ?? 0,   'icon'=>'mouse-pointer'],
+        ['label'=>'Active Cards',    'value'=>$totalCards,         'icon'=>'link-2'],
+        ['label'=>'Media Gallery',   'value'=>$totalPhotos + $totalVideos, 'icon'=>'image'],
+        ['label'=>'Komentar',        'value'=>$totalComments,      'icon'=>'message-square'],
     ];
     foreach ($stats as $stat):
     ?>
-    <div class="bg-dark-800 border border-white/5 rounded-2xl p-4 flex flex-col justify-between">
+    <div class="bg-dark-800 border border-white/5 hover:border-amber-500/20 rounded-2xl p-4 flex flex-col justify-between transition-all">
         <div class="flex items-center justify-between mb-2">
-            <span class="text-[11px] font-medium text-gray-500 uppercase tracking-wider"><?= $stat['label'] ?></span>
-            <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                 style="background:<?= $stat['color'] ?>15; color:<?= $stat['color'] ?>">
+            <span class="text-[11px] font-medium text-gray-400 uppercase tracking-wider truncate mr-1"><?= $stat['label'] ?></span>
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-amber-500/10 text-amber-500">
                 <i data-lucide="<?= $stat['icon'] ?>" class="w-3.5 h-3.5"></i>
             </div>
         </div>
@@ -46,10 +43,9 @@
 
     <!-- 7-Day Visitor Analytics (CSS Bar Chart) -->
     <div class="lg:col-span-7 bg-dark-800 border border-white/5 rounded-2xl p-6 flex flex-col justify-between">
-        <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center justify-between mb-4">
             <div>
                 <h2 class="font-condensed font-bold text-lg text-white tracking-wide">Tren Kunjungan (7 Hari)</h2>
-                <p class="text-xs text-gray-500 mt-0.5">Jumlah pengunjung unik per hari</p>
             </div>
             <div class="text-xs font-semibold text-amber-500 bg-amber-500/10 px-2.5 py-1 rounded-md border border-amber-500/20">
                 <?= number_format(array_sum(array_column($visitor7Days ?? [], 'visits'))) ?> total
@@ -97,8 +93,7 @@
     <div class="lg:col-span-5 bg-dark-800 border border-white/5 rounded-2xl p-6">
         <div class="flex items-center justify-between mb-4">
             <div>
-                <h2 class="font-condensed font-bold text-lg text-white tracking-wide">Top Links Paling Populer</h2>
-                <p class="text-xs text-gray-500 mt-0.5">Card dengan klik terbanyak</p>
+                <h2 class="font-condensed font-bold text-lg text-white tracking-wide">Top Links Populer</h2>
             </div>
             <a href="<?= $adminBase ?>/cards" class="text-xs text-amber-500 hover:underline">Semua Card</a>
         </div>
@@ -129,24 +124,21 @@
 </div>
 
 <!-- Quick Actions -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
     <?php
     $actions = [
-        ['href'=>$adminBase.'/cards',    'icon'=>'plus-circle',  'label'=>'Kelola Cards & Link', 'desc'=>'Tambah link atau cek jumlah klik'],
-        ['href'=>$adminBase.'/gallery',  'icon'=>'upload-cloud', 'label'=>'Upload ke Gallery',   'desc'=>'Foto atau video baru'],
-        ['href'=>$adminBase.'/settings', 'icon'=>'sliders',      'label'=>'Konfigurasi Website', 'desc'=>'SEO, Maintenance, & Popup Promo'],
+        ['href'=>$adminBase.'/cards',    'icon'=>'plus-circle',  'label'=>'Kelola Cards & Link'],
+        ['href'=>$adminBase.'/gallery',  'icon'=>'upload-cloud', 'label'=>'Upload Gallery'],
+        ['href'=>$adminBase.'/settings', 'icon'=>'sliders',      'label'=>'Konfigurasi Website'],
     ];
     foreach ($actions as $a):
     ?>
     <a href="<?= $a['href'] ?>"
-       class="bg-dark-800 border border-white/5 hover:border-amber-500/30 rounded-2xl p-5 flex items-center gap-4 transition-all group">
-        <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-amber-500/10 text-amber-500 group-hover:bg-amber-500 group-hover:text-black transition-all">
-            <i data-lucide="<?= $a['icon'] ?>" class="w-5 h-5"></i>
+       class="bg-dark-800 border border-white/5 hover:border-amber-500/30 rounded-2xl p-4 flex items-center gap-3.5 transition-all group">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-amber-500/10 text-amber-500 group-hover:bg-amber-500 group-hover:text-black transition-all">
+            <i data-lucide="<?= $a['icon'] ?>" class="w-4 h-4"></i>
         </div>
-        <div>
-            <div class="text-sm font-semibold text-white"><?= $a['label'] ?></div>
-            <div class="text-xs text-gray-600 mt-0.5"><?= $a['desc'] ?></div>
-        </div>
+        <div class="text-sm font-semibold text-white"><?= $a['label'] ?></div>
     </a>
     <?php endforeach; ?>
 </div>

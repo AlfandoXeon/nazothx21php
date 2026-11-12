@@ -42,7 +42,7 @@
                         <?= date('d M Y, H:i', strtotime($c['created_at'])) ?>
                     </td>
                     <td class="px-6 py-4">
-                        <span class="<?= $c['is_approved'] ? 'text-green-400 bg-green-500/10 border-green-500/20' : 'text-gray-500 bg-gray-500/10 border-gray-500/20' ?> px-2.5 py-1 rounded-lg text-xs border">
+                        <span class="<?= $c['is_approved'] ? 'text-amber-400 bg-amber-500/10 border-amber-500/30' : 'text-gray-500 bg-dark-600 border-white/5' ?> px-2.5 py-1 rounded-lg text-xs border">
                             <?= $c['is_approved'] ? 'Tampil' : 'Hidden' ?>
                         </span>
                     </td>

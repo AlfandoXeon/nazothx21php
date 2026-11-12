@@ -12,6 +12,18 @@ class Comment extends Model
         return $this->db->query("SELECT * FROM comments WHERE is_approved = 1 ORDER BY created_at DESC");
     }
 
+    public function latestApproved(int $limit = 5): array
+    {
+        $limit = max(1, $limit);
+        return $this->db->query("SELECT * FROM comments WHERE is_approved = 1 ORDER BY created_at DESC LIMIT {$limit}");
+    }
+
+    public function countApproved(): int
+    {
+        $r = $this->db->queryOne("SELECT COUNT(*) as c FROM comments WHERE is_approved = 1");
+        return (int)($r['c'] ?? 0);
+    }
+
     public function allAdmin(): array
     {
         return $this->db->query("SELECT * FROM comments ORDER BY created_at DESC");
@@ -26,6 +38,18 @@ class Comment extends Model
                 $data['message'],
                 $data['ip'] ?? '',
             ]
+        );
+    }
+
+    /**
+     * Dapatkan komentar terakhir berdasarkan IP
+     */
+    public function lastCommentByIp(string $ip): ?array
+    {
+        if (empty($ip)) return null;
+        return $this->db->queryOne(
+            "SELECT * FROM comments WHERE ip_address = ? ORDER BY created_at DESC LIMIT 1",
+            [$ip]
         );
     }
 

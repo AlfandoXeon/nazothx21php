@@ -1,14 +1,14 @@
 <?php use App\Core\Security; ?>
 
-<div class="flex items-center justify-between mb-6">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
     <div>
-        <h1 class="font-condensed font-bold text-3xl text-white tracking-wide">Social Icons</h1>
-        <p class="text-gray-600 text-sm mt-1">Kelola ikon sosial media di header profil.</p>
+        <h1 class="font-condensed font-bold text-2xl sm:text-3xl text-white tracking-wide">Social Icons</h1>
+        <p class="text-gray-500 text-xs sm:text-sm mt-0.5">Kelola ikon medsos di header profil.</p>
     </div>
     <button onclick="openModal('modal-add')"
-            class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-black hover:opacity-90"
+            class="w-full sm:w-auto justify-center flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-black hover:opacity-90 shadow-md"
             style="background:#f59e0b">
-        <i data-lucide="plus" class="w-4 h-4"></i> Tambah
+        <i data-lucide="plus" class="w-4 h-4"></i> Tambah Icon
     </button>
 </div>
 

@@ -412,12 +412,172 @@ class AdminController extends Controller
     public function settings(array $params = []): void
     {
         Auth::requireAuth();
+        $settings = (new Setting())->allAsMap();
+
+        // Ambil ringkasan status tabel database
+        $db = Database::getInstance();
+        $tableStats = [];
+        $totalSizeKb = 0;
+        $totalRows = 0;
+
+        try {
+            $dbName = $_ENV['DB_NAME'] ?? 'nazo_linktree';
+            $rows = $db->query("
+                SELECT table_name AS `table`,
+                       table_rows AS `rows`,
+                       ROUND((data_length + index_length) / 1024, 2) AS `size_kb`
+                FROM information_schema.tables
+                WHERE table_schema = ?
+                ORDER BY (data_length + index_length) DESC
+            ", [$dbName]);
+
+            foreach ($rows as $r) {
+                $tableStats[] = $r;
+                $totalSizeKb += (float)$r['size_kb'];
+                $totalRows   += (int)$r['rows'];
+            }
+        } catch (\Exception $e) {
+            $tableStats = [];
+        }
+
         $this->view('admin.settings', [
-            'settings'  => (new Setting())->allAsMap(),
-            'csrfToken' => Security::csrfToken(),
-            'flash'     => $this->getFlash('settings'),
-            'adminBase' => $this->adminBase(),
+            'settings'    => $settings,
+            'csrfToken'   => Security::csrfToken(),
+            'flash'       => $this->getFlash('settings'),
+            'adminBase'   => $this->adminBase(),
+            'tableStats'  => $tableStats,
+            'totalSizeKb' => $totalSizeKb,
+            'totalRows'   => $totalRows,
         ], 'admin');
+    }
+
+    /**
+     * Download Backup Database SQL
+     */
+    public function backupDatabase(array $params = []): void
+    {
+        Auth::requireAuth();
+
+        $db = Database::getInstance();
+        $pdo = $db->getPdo();
+        $dbName = $_ENV['DB_NAME'] ?? 'nazo_linktree';
+
+        $tables = [];
+        $stmt = $pdo->query("SHOW FULL TABLES WHERE Table_Type = 'BASE TABLE'");
+        while ($row = $stmt->fetch(\PDO::FETCH_NUM)) {
+            $tables[] = $row[0];
+        }
+
+        $sqlDump = "-- NAZO Linktree Database Backup\n";
+        $sqlDump .= "-- Generated on " . date('Y-m-d H:i:s') . "\n";
+        $sqlDump .= "-- Database: `{$dbName}`\n\n";
+        $sqlDump .= "SET FOREIGN_KEY_CHECKS=0;\n";
+        $sqlDump .= "SET SQL_MODE = 'NO_AUTO_VALUE_ON_ZERO';\n\n";
+
+        foreach ($tables as $table) {
+            $createStmt = $pdo->query("SHOW CREATE TABLE `{$table}`");
+            $createRow = $createStmt->fetch(\PDO::FETCH_NUM);
+            $sqlDump .= "-- Table structure for `{$table}`\n";
+            $sqlDump .= "DROP TABLE IF EXISTS `{$table}`;\n";
+            $sqlDump .= $createRow[1] . ";\n\n";
+
+            $rowsStmt = $pdo->query("SELECT * FROM `{$table}`");
+            $rows = $rowsStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            if (!empty($rows)) {
+                $sqlDump .= "-- Dumping data for `{$table}`\n";
+                foreach ($rows as $r) {
+                    $cols = array_map(function($c) { return "`" . str_replace("`", "``", $c) . "`"; }, array_keys($r));
+                    $vals = array_map(function($v) use ($pdo) {
+                        return ($v === null) ? "NULL" : $pdo->quote($v);
+                    }, array_values($r));
+
+                    $sqlDump .= "INSERT INTO `{$table}` (" . implode(", ", $cols) . ") VALUES (" . implode(", ", $vals) . ");\n";
+                }
+                $sqlDump .= "\n";
+            }
+        }
+
+        $sqlDump .= "SET FOREIGN_KEY_CHECKS=1;\n";
+
+        $this->log('DB_BACKUP', 'Download backup sql database');
+
+        $filename = 'nazo_backup_' . date('Ymd_His') . '.sql';
+        header('Content-Type: application/sql');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Content-Length: ' . strlen($sqlDump));
+        echo $sqlDump;
+        exit;
+    }
+
+    /**
+     * Optimasi & Defragmentasi Tabel Database
+     */
+    public function optimizeDatabase(array $params = []): void
+    {
+        Auth::requireAuth();
+        Security::requireCsrf();
+
+        $db = Database::getInstance();
+        $pdo = $db->getPdo();
+
+        try {
+            $stmt = $pdo->query("SHOW FULL TABLES WHERE Table_Type = 'BASE TABLE'");
+            $tables = [];
+            while ($row = $stmt->fetch(\PDO::FETCH_NUM)) {
+                $tables[] = "`" . $row[0] . "`";
+            }
+
+            if (!empty($tables)) {
+                $tableList = implode(", ", $tables);
+                $pdo->query("OPTIMIZE TABLE {$tableList}");
+            }
+
+            $this->log('DB_OPTIMIZE', 'Optimasi tabel database berhasil');
+            $this->flash('settings', 'success:Optimasi dan defragmentasi tabel database berhasil dilakukan.');
+        } catch (\Exception $e) {
+            $this->flash('settings', 'error:Gagal melakukan optimasi: ' . $e->getMessage());
+        }
+
+        $this->redirect($this->adminBase() . '/settings');
+    }
+
+    /**
+     * Bersihkan Data Log / Klik
+     */
+    public function cleanupDatabase(array $params = []): void
+    {
+        Auth::requireAuth();
+        Security::requireCsrf();
+
+        $db = Database::getInstance();
+        $type = $_POST['cleanup_type'] ?? '';
+
+        try {
+            if ($type === 'visitor_logs_30d') {
+                $count = $db->execute("DELETE FROM visitor_logs WHERE visited_at < DATE_SUB(NOW(), INTERVAL 30 DAY)");
+                $this->log('DB_CLEANUP', "Pembersihan log pengunjung >30 hari ({$count} baris)");
+                $this->flash('settings', "success:Berhasil membersihkan {$count} data log pengunjung lebih dari 30 hari.");
+            } elseif ($type === 'visitor_logs_all') {
+                $db->execute("TRUNCATE TABLE visitor_logs");
+                $this->log('DB_CLEANUP', "Truncate semua log pengunjung");
+                $this->flash('settings', 'success:Semua data log pengunjung telah dikosongkan.');
+            } elseif ($type === 'admin_logs_all') {
+                $db->execute("TRUNCATE TABLE admin_logs");
+                $this->log('DB_CLEANUP', "Truncate semua log aktivitas admin");
+                $this->flash('settings', 'success:Semua riwayat aktivitas admin berhasil dibersihkan.');
+            } elseif ($type === 'clicks_all') {
+                $db->execute("TRUNCATE TABLE card_clicks");
+                $this->log('DB_CLEANUP', "Truncate log klik card");
+                $this->flash('settings', 'success:Semua data riwayat klik kartu berhasil direset.');
+            } else {
+                $this->flash('settings', 'error:Opsi pembersihan tidak valid.');
+            }
+        } catch (\Exception $e) {
+            $this->flash('settings', 'error:Gagal membersihkan data: ' . $e->getMessage());
+        }
+
+        $this->redirect($this->adminBase() . '/settings');
     }
 
     public function updateSettings(array $params = []): void

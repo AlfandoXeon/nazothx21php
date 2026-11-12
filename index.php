@@ -51,6 +51,7 @@ $router = new Router();
 // Public Routes
 $router->get('', 'HomeController@index');
 $router->get('gallery', 'GalleryController@index');
+$router->get('komentar', 'HomeController@comments');
 $router->post('komentar', 'HomeController@storeComment');
 $router->get('go/:id', 'HomeController@redirectCard');
 
@@ -89,9 +90,12 @@ $router->post($adminRoute . '/social/delete', 'AdminController@deleteSocial');
 $router->get($adminRoute . '/profile', 'AdminController@profile');
 $router->post($adminRoute . '/profile/update', 'AdminController@updateProfile');
 
-// Admin - Settings
+// Admin - Settings & Database Tools
 $router->get($adminRoute . '/settings', 'AdminController@settings');
 $router->post($adminRoute . '/settings/update', 'AdminController@updateSettings');
+$router->get($adminRoute . '/database/backup', 'AdminController@backupDatabase');
+$router->post($adminRoute . '/database/cleanup', 'AdminController@cleanupDatabase');
+$router->post($adminRoute . '/database/optimize', 'AdminController@optimizeDatabase');
 
 // Dispatch
 $router->dispatch();

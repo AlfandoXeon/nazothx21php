@@ -1,13 +1,13 @@
 <?php use App\Core\Security; ?>
 
 <!-- Header -->
-<div class="flex items-center justify-between mb-6">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
     <div>
-        <h1 class="font-condensed font-bold text-3xl text-white tracking-wide">Cards</h1>
-        <p class="text-gray-600 text-sm mt-1">Kelola semua link card yang tampil di halaman utama.</p>
+        <h1 class="font-condensed font-bold text-2xl sm:text-3xl text-white tracking-wide">Cards</h1>
+        <p class="text-gray-500 text-xs sm:text-sm mt-0.5">Kelola link media sosial di beranda.</p>
     </div>
     <button onclick="openModal('modal-add')"
-            class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-black transition-all hover:opacity-90"
+            class="w-full sm:w-auto justify-center flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-black transition-all hover:opacity-90 shadow-md"
             style="background:#f59e0b">
         <i data-lucide="plus" class="w-4 h-4"></i> Tambah Card
     </button>
@@ -67,7 +67,7 @@
                     </td>
                     <td class="px-6 py-4">
                         <button onclick="toggleCard(<?= $card['id'] ?>, this)"
-                                class="<?= $card['is_active'] ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-gray-500/10 text-gray-500 border-gray-500/20' ?> px-2.5 py-1 rounded-lg text-xs border transition-all">
+                                class="<?= $card['is_active'] ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' : 'bg-dark-600 text-gray-500 border-white/5' ?> px-2.5 py-1 rounded-lg text-xs border transition-all hover:border-amber-500/40">
                             <?= $card['is_active'] ? 'Aktif' : 'Nonaktif' ?>
                         </button>
                     </td>

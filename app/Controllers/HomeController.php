@@ -36,7 +36,9 @@ class HomeController extends Controller
         $profile      = (new Profile())->get();
         $cards        = (new Card())->allActive();
         $socials      = (new SocialHeader())->allOrdered();
-        $comments     = (new Comment())->allApproved();
+        $commentModel = new Comment();
+        $comments     = $commentModel->latestApproved(4);
+        $totalComments= $commentModel->countApproved();
         $visitorCount = $visitorLog->totalCount();
 
         // Ad popup
@@ -52,9 +54,54 @@ class HomeController extends Controller
             'cards'        => $cards,
             'socials'      => $socials,
             'comments'     => $comments,
+            'totalComments'=> $totalComments,
             'settings'     => $settings,
             'adEnabled'    => $adEnabled,
             'visitorCount' => $visitorCount,
+            'seoTitle'     => $seoTitle,
+            'seoDesc'      => $seoDesc,
+            'seoOgImage'   => $seoOgImage,
+            'flash'        => $this->getFlash('comment'),
+            'csrfToken'    => Security::csrfToken(),
+        ]);
+    }
+
+    /**
+     * Halaman Tab Komentar Lengkap
+     */
+    public function comments(array $params = []): void
+    {
+        $settings = (new Setting())->allAsMap();
+
+        if (($settings['maintenance_mode'] ?? '0') === '1') {
+            $profile = (new Profile())->get();
+            $socials = (new SocialHeader())->allOrdered();
+            $this->view('maintenance.index', [
+                'profile'  => $profile,
+                'socials'  => $socials,
+                'settings' => $settings,
+            ], 'none');
+            return;
+        }
+
+        // Record Visitor Log
+        $visitorLog = new VisitorLog();
+        $visitorLog->record($_SERVER['REMOTE_ADDR'] ?? '', '/komentar');
+
+        $profile       = (new Profile())->get();
+        $comments      = (new Comment())->allApproved();
+        $adEnabled     = ($settings['ad_enabled'] ?? '0') === '1';
+
+        $siteTitle  = !empty($settings['seo_title']) ? $settings['seo_title'] : 'NAZO ナゾ';
+        $seoTitle   = 'Komentar — ' . $siteTitle;
+        $seoDesc    = 'Semua komentar dan pesan untuk ' . ($profile['name'] ?? 'NAZO');
+        $seoOgImage = $settings['seo_og_image'] ?? '';
+
+        $this->view('comments.index', [
+            'profile'      => $profile,
+            'comments'     => $comments,
+            'settings'     => $settings,
+            'adEnabled'    => $adEnabled,
             'seoTitle'     => $seoTitle,
             'seoDesc'      => $seoDesc,
             'seoOgImage'   => $seoOgImage,
@@ -90,10 +137,30 @@ class HomeController extends Controller
         Security::requireCsrf();
 
         $base = rtrim($_ENV['APP_URL'] ?? '', '/');
+        $redirectUrl = !empty($_POST['redirect_to']) ? $_POST['redirect_to'] : ($base . '/#komentar');
+        $ip = Security::getClientIp();
 
-        if (!Security::rateLimit('comment_' . ($_SERVER['REMOTE_ADDR'] ?? ''), 3, 120)) {
-            $this->flash('comment', 'error:Terlalu banyak komentar. Coba lagi sebentar lagi.');
-            $this->redirect($base . '/');
+        // 1. Cek jeda waktu (cooldown) berbasis IP (2 menit = 120 detik)
+        $commentModel = new Comment();
+        $cooldownSeconds = 120; // 2 menit
+        $lastComment = $commentModel->lastCommentByIp($ip);
+
+        if ($lastComment && !empty($lastComment['created_at'])) {
+            $lastTime = strtotime($lastComment['created_at']);
+            $diff = time() - $lastTime;
+            if ($diff < $cooldownSeconds) {
+                $remaining = $cooldownSeconds - $diff;
+                $remainingMinutes = ceil($remaining / 60);
+                $this->flash('comment', "error:Mohon tunggu sekitar {$remainingMinutes} menit ({$remaining} detik) sebelum dapat mengirim komentar lagi.");
+                $this->redirect($redirectUrl);
+                return;
+            }
+        }
+
+        // 2. Rate Limiting cadangan berbasis session
+        if (!Security::rateLimit('comment_' . $ip, 2, 120)) {
+            $this->flash('comment', 'error:Terlalu banyak permintaan. Mohon tunggu 2 menit sebelum mencoba lagi.');
+            $this->redirect($redirectUrl);
             return;
         }
 
@@ -102,23 +169,30 @@ class HomeController extends Controller
 
         if (empty($name) || empty($message)) {
             $this->flash('comment', 'error:Nama dan pesan tidak boleh kosong.');
-            $this->redirect($base . '/');
+            $this->redirect($redirectUrl);
             return;
         }
 
-        if (mb_strlen($name) > 100 || mb_strlen($message) > 500) {
-            $this->flash('comment', 'error:Input terlalu panjang.');
-            $this->redirect($base . '/');
+        if (mb_strlen($name) > 100) {
+            $this->flash('comment', 'error:Nama terlalu panjang (maksimal 100 karakter).');
+            $this->redirect($redirectUrl);
             return;
         }
 
-        (new Comment())->create([
+        // Validasi komentar tidak boleh lebih dari 1000 karakter
+        if (mb_strlen($message) > 1000) {
+            $this->flash('comment', 'error:Komentar terlalu panjang. Maksimal 1000 karakter dalam 1 kali kirim.');
+            $this->redirect($redirectUrl);
+            return;
+        }
+
+        $commentModel->create([
             'name'    => $name,
             'message' => $message,
-            'ip'      => $_SERVER['REMOTE_ADDR'] ?? '',
+            'ip'      => $ip,
         ]);
 
         $this->flash('comment', 'success:Komentar berhasil dikirim. Terima kasih!');
-        $this->redirect($base . '/#komentar');
+        $this->redirect($redirectUrl);
     }
 }
