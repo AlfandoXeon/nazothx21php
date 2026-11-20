@@ -52,13 +52,14 @@
             $adminSegment = '/' . ($_ENV['ADMIN_ROUTE'] ?? 'adminadalahraja');
 
             $navItems = [
-                ['icon'=>'layout-dashboard', 'label'=>'Dashboard',  'path'=>'/dashboard'],
-                ['icon'=>'link-2',            'label'=>'Cards',      'path'=>'/cards'],
-                ['icon'=>'image',             'label'=>'Gallery',    'path'=>'/gallery'],
-                ['icon'=>'message-square',    'label'=>'Komentar',   'path'=>'/comments'],
+                ['icon'=>'layout-dashboard', 'label'=>'Dashboard',   'path'=>'/dashboard'],
+                ['icon'=>'link-2',            'label'=>'Cards',       'path'=>'/cards'],
+                ['icon'=>'image',             'label'=>'Gallery',     'path'=>'/gallery'],
+                ['icon'=>'file-text',         'label'=>'Artikel',     'path'=>'/articles'],
+                ['icon'=>'message-square',    'label'=>'Komentar',    'path'=>'/comments'],
                 ['icon'=>'share-2',           'label'=>'Social Icons','path'=>'/social'],
-                ['icon'=>'user',              'label'=>'Profil',     'path'=>'/profile'],
-                ['icon'=>'settings',          'label'=>'Settings',   'path'=>'/settings'],
+                ['icon'=>'user',              'label'=>'Profil',      'path'=>'/profile'],
+                ['icon'=>'settings',          'label'=>'Settings',    'path'=>'/settings'],
             ];
             foreach ($navItems as $item):
                 $href = $adminBase . $item['path'];

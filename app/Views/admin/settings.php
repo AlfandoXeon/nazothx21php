@@ -78,6 +78,19 @@ $inputCls = "w-full bg-dark-700 border border-white/5 rounded-xl px-4 py-3 text-
             </div>
         </div>
 
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label class="text-xs text-gray-500 mb-1 block">Judul Halaman Artikel</label>
+                <input type="text" name="article_title" value="<?= Security::e($s['article_title'] ?? 'Artikel By Nazo') ?>"
+                       class="<?= $inputCls ?>" placeholder="Artikel By Nazo">
+            </div>
+            <div>
+                <label class="text-xs text-gray-500 mb-1 block">Subtitle Halaman Artikel</label>
+                <input type="text" name="article_subtitle" value="<?= Security::e($s['article_subtitle'] ?? 'Tulisan, panduan, dan catatan terbaru dari Nazo.') ?>"
+                       class="<?= $inputCls ?>" placeholder="Tulisan, panduan, dan catatan terbaru dari Nazo.">
+            </div>
+        </div>
+
         <!-- Maintenance Mode Box -->
         <div class="p-5 bg-dark-700/80 rounded-xl border border-white/5 space-y-4">
             <div class="flex items-center justify-between">
@@ -242,6 +255,8 @@ $inputCls = "w-full bg-dark-700 border border-white/5 rounded-xl px-4 py-3 text-
                     class="flex-1 bg-dark-700 border border-white/5 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500/50">
                 <option value="visitor_logs_30d">Log Pengunjung: Hapus yang lebih dari 30 hari lalu</option>
                 <option value="visitor_logs_all">Log Pengunjung: Kosongkan seluruh data kunjungan</option>
+                <option value="article_views_30d">Log Pembaca Artikel: Hapus yang lebih dari 30 hari lalu</option>
+                <option value="article_views_all">Log Pembaca Artikel: Kosongkan log deduplikasi pembaca</option>
                 <option value="admin_logs_all">Log Admin: Kosongkan seluruh riwayat log aktivitas admin</option>
                 <option value="clicks_all">Log Klik: Reset semua data analitik klik card</option>
             </select>

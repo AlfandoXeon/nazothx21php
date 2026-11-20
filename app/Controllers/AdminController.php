@@ -3,7 +3,10 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Core\Auth;
+use App\Core\Markdown;
 use App\Core\Security;
+use App\Models\Article;
+use App\Models\ArticleComment;
 use App\Models\Card;
 use App\Models\Gallery;
 use App\Models\Comment;
@@ -85,28 +88,33 @@ class AdminController extends Controller
     public function dashboard(array $params = []): void
     {
         Auth::requireAuth();
-        $card       = new Card();
-        $gallery    = new Gallery();
-        $comment    = new Comment();
-        $visitorLog = new VisitorLog();
-        $cardClick  = new CardClick();
+        $card           = new Card();
+        $gallery        = new Gallery();
+        $comment        = new Comment();
+        $visitorLog     = new VisitorLog();
+        $cardClick      = new CardClick();
+        $article        = new Article();
+        $articleComment = new ArticleComment();
 
         $db   = Database::getInstance();
         $logs = $db->query("SELECT * FROM admin_logs ORDER BY created_at DESC LIMIT 10");
 
         $this->view('admin.dashboard', [
-            'totalCards'    => $card->count(),
-            'totalPhotos'   => $gallery->countImages(),
-            'totalVideos'   => $gallery->countVideos(),
-            'totalComments' => $comment->countTotal(),
-            'totalVisitors' => $visitorLog->totalCount(),
-            'todayVisitors' => $visitorLog->todayCount(),
-            'visitor7Days'  => $visitorLog->last7Days(),
-            'totalClicks'   => $cardClick->totalClicks(),
-            'topCards'      => $cardClick->topCards(5),
-            'logs'          => $logs,
-            'csrfToken'     => Security::csrfToken(),
-            'adminBase'     => $this->adminBase(),
+            'totalCards'           => $card->count(),
+            'totalPhotos'          => $gallery->countImages(),
+            'totalVideos'          => $gallery->countVideos(),
+            'totalComments'        => $comment->countTotal() + $articleComment->countTotal(),
+            'totalVisitors'        => $visitorLog->totalCount(),
+            'todayVisitors'        => $visitorLog->todayCount(),
+            'visitor7Days'         => $visitorLog->last7Days(),
+            'totalClicks'          => $cardClick->totalClicks(),
+            'topCards'             => $cardClick->topCards(5),
+            'totalArticles'        => $article->countTotal(),
+            'totalArticleViews'    => $article->totalViews(),
+            'topArticles'          => $article->topArticles(5),
+            'logs'                 => $logs,
+            'csrfToken'            => Security::csrfToken(),
+            'adminBase'            => $this->adminBase(),
         ], 'admin');
     }
 
@@ -280,15 +288,315 @@ class AdminController extends Controller
         $this->json(['success' => true]);
     }
 
+    // ─── Articles ───────────────────────────────────────────────────────────
+
+    private function deleteLocalArticleThumbnail(?string $url): void
+    {
+        if (empty($url)) {
+            return;
+        }
+
+        $rel = parse_url($url, PHP_URL_PATH) ?? '';
+        $rel = preg_replace('#^/NazoLinktree/#', '/', $rel);
+        if (strpos($rel, '/Media/articles/') !== 0) {
+            return;
+        }
+
+        $allowedDir = realpath(ROOT_PATH . '/Media/articles');
+        $targetPath = realpath(ROOT_PATH . $rel);
+
+        if ($allowedDir && $targetPath && strpos($targetPath, $allowedDir . DIRECTORY_SEPARATOR) === 0 && is_file($targetPath)) {
+            @unlink($targetPath);
+        }
+    }
+
+    public function articles(array $params = []): void
+    {
+        Auth::requireAuth();
+        $articleModel        = new Article();
+        $articleCommentModel = new ArticleComment();
+        $articles            = $articleModel->allAdminWithStats();
+
+        $publishedCount = 0;
+        $totalViews     = 0;
+        foreach ($articles as $a) {
+            if (($a['status'] ?? '') === 'published') {
+                $publishedCount++;
+            }
+            $totalViews += (int)($a['views_count'] ?? 0);
+        }
+
+        $this->view('admin.articles', [
+            'articles'             => $articles,
+            'totalArticles'        => count($articles),
+            'publishedCount'       => $publishedCount,
+            'totalViews'           => $totalViews,
+            'totalArticleComments' => $articleCommentModel->countTotal(),
+            'csrfToken'            => Security::csrfToken(),
+            'flash'                => $this->getFlash('articles'),
+            'adminBase'            => $this->adminBase(),
+        ], 'admin');
+    }
+
+    public function createArticle(array $params = []): void
+    {
+        Auth::requireAuth();
+        $this->view('admin.article_form', [
+            'article'    => null,
+            'isEdit'     => false,
+            'categories' => (new Article())->publishedCategories(),
+            'csrfToken'  => Security::csrfToken(),
+            'flash'      => $this->getFlash('article_form'),
+            'adminBase'  => $this->adminBase(),
+        ], 'admin');
+    }
+
+    public function storeArticle(array $params = []): void
+    {
+        Auth::requireAuth();
+        Security::requireCsrf();
+
+        $title        = trim($_POST['title'] ?? '');
+        $customSlug   = trim($_POST['slug'] ?? '');
+        $category     = trim($_POST['category'] ?? '') ?: 'Umum';
+        $excerpt      = trim($_POST['excerpt'] ?? '');
+        $content      = trim($_POST['content'] ?? '');
+        $thumbnailUrl = trim($_POST['thumbnail_url'] ?? '');
+        $status       = ($_POST['status'] ?? 'published') === 'draft' ? 'draft' : 'published';
+
+        if ($title === '' || $content === '') {
+            $this->flash('article_form', 'error:Judul dan isi artikel wajib diisi.');
+            $this->redirect($this->adminBase() . '/articles/create');
+            return;
+        }
+
+        if (mb_strlen($title) > 200) {
+            $this->flash('article_form', 'error:Judul terlalu panjang (maksimal 200 karakter).');
+            $this->redirect($this->adminBase() . '/articles/create');
+            return;
+        }
+
+        if (mb_strlen($category) > 80) {
+            $category = mb_substr($category, 0, 80);
+        }
+
+        if (!Markdown::isSafeMediaUrl($thumbnailUrl)) {
+            $this->flash('article_form', 'error:URL thumbnail tidak valid. Gunakan URL http(s) atau unggah file gambar.');
+            $this->redirect($this->adminBase() . '/articles/create');
+            return;
+        }
+
+        // Handle thumbnail file upload (overrides manual URL if provided)
+        if (isset($_FILES['thumbnail_file']) && $_FILES['thumbnail_file']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $destDir = ROOT_PATH . '/Media/articles';
+            try {
+                $filename     = Security::handleUpload($_FILES['thumbnail_file'], $destDir, ['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+                $thumbnailUrl = '/Media/articles/' . $filename;
+            } catch (\Exception $e) {
+                $this->flash('article_form', 'error:' . $e->getMessage());
+                $this->redirect($this->adminBase() . '/articles/create');
+                return;
+            }
+        }
+
+        if ($excerpt === '') {
+            $excerpt = Markdown::excerpt($content, 160);
+        } elseif (mb_strlen($excerpt) > 350) {
+            $excerpt = mb_substr($excerpt, 0, 347) . '...';
+        }
+
+        $articleModel = new Article();
+        $slug         = $articleModel->generateUniqueSlug($customSlug !== '' ? $customSlug : $title);
+
+        $articleModel->create([
+            'title'         => $title,
+            'slug'          => $slug,
+            'excerpt'       => $excerpt,
+            'content'       => $content,
+            'thumbnail_url' => $thumbnailUrl,
+            'category'      => $category,
+            'status'        => $status,
+        ]);
+
+        $this->log('ARTICLE_CREATE', $title);
+        $this->flash('articles', 'success:Artikel berhasil ditambahkan.');
+        $this->redirect($this->adminBase() . '/articles');
+    }
+
+    public function editArticle(array $params = []): void
+    {
+        Auth::requireAuth();
+        $id           = (int)($params['id'] ?? 0);
+        $articleModel = new Article();
+        $article      = $articleModel->find($id);
+
+        if (!$article) {
+            $this->flash('articles', 'error:Artikel tidak ditemukan.');
+            $this->redirect($this->adminBase() . '/articles');
+            return;
+        }
+
+        $this->view('admin.article_form', [
+            'article'    => $article,
+            'isEdit'     => true,
+            'categories' => $articleModel->publishedCategories(),
+            'csrfToken'  => Security::csrfToken(),
+            'flash'      => $this->getFlash('article_form'),
+            'adminBase'  => $this->adminBase(),
+        ], 'admin');
+    }
+
+    public function updateArticle(array $params = []): void
+    {
+        Auth::requireAuth();
+        Security::requireCsrf();
+
+        $id           = (int)($_POST['id'] ?? 0);
+        $articleModel = new Article();
+        $existing     = $articleModel->find($id);
+
+        if (!$existing) {
+            $this->flash('articles', 'error:Artikel tidak ditemukan.');
+            $this->redirect($this->adminBase() . '/articles');
+            return;
+        }
+
+        $title           = trim($_POST['title'] ?? '');
+        $customSlug      = trim($_POST['slug'] ?? '');
+        $category        = trim($_POST['category'] ?? '') ?: 'Umum';
+        $excerpt         = trim($_POST['excerpt'] ?? '');
+        $content         = trim($_POST['content'] ?? '');
+        $thumbnailUrl    = trim($_POST['thumbnail_url'] ?? '');
+        $removeThumbnail = isset($_POST['remove_thumbnail']) && $_POST['remove_thumbnail'] === '1';
+        $status          = ($_POST['status'] ?? 'published') === 'draft' ? 'draft' : 'published';
+
+        if ($title === '' || $content === '') {
+            $this->flash('article_form', 'error:Judul dan isi artikel wajib diisi.');
+            $this->redirect($this->adminBase() . '/articles/edit/' . $id);
+            return;
+        }
+
+        if (mb_strlen($title) > 200) {
+            $this->flash('article_form', 'error:Judul terlalu panjang (maksimal 200 karakter).');
+            $this->redirect($this->adminBase() . '/articles/edit/' . $id);
+            return;
+        }
+
+        if (mb_strlen($category) > 80) {
+            $category = mb_substr($category, 0, 80);
+        }
+
+        if (!Markdown::isSafeMediaUrl($thumbnailUrl)) {
+            $this->flash('article_form', 'error:URL thumbnail tidak valid. Gunakan URL http(s) atau unggah file gambar.');
+            $this->redirect($this->adminBase() . '/articles/edit/' . $id);
+            return;
+        }
+
+        $oldThumbnail = $existing['thumbnail_url'] ?? '';
+
+        if ($removeThumbnail) {
+            $this->deleteLocalArticleThumbnail($oldThumbnail);
+            $thumbnailUrl = '';
+        } elseif (isset($_FILES['thumbnail_file']) && $_FILES['thumbnail_file']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $destDir = ROOT_PATH . '/Media/articles';
+            try {
+                $filename     = Security::handleUpload($_FILES['thumbnail_file'], $destDir, ['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+                $thumbnailUrl = '/Media/articles/' . $filename;
+                $this->deleteLocalArticleThumbnail($oldThumbnail);
+            } catch (\Exception $e) {
+                $this->flash('article_form', 'error:' . $e->getMessage());
+                $this->redirect($this->adminBase() . '/articles/edit/' . $id);
+                return;
+            }
+        } elseif ($thumbnailUrl !== $oldThumbnail) {
+            // If manual URL replaced a previously uploaded local thumbnail, clean up the old local file
+            $this->deleteLocalArticleThumbnail($oldThumbnail);
+        }
+
+        if ($excerpt === '') {
+            $excerpt = Markdown::excerpt($content, 160);
+        } elseif (mb_strlen($excerpt) > 350) {
+            $excerpt = mb_substr($excerpt, 0, 347) . '...';
+        }
+
+        $slug = $articleModel->generateUniqueSlug($customSlug !== '' ? $customSlug : $title, $id);
+
+        $articleModel->update($id, [
+            'title'         => $title,
+            'slug'          => $slug,
+            'excerpt'       => $excerpt,
+            'content'       => $content,
+            'thumbnail_url' => $thumbnailUrl,
+            'category'      => $category,
+            'status'        => $status,
+        ]);
+
+        $this->log('ARTICLE_UPDATE', "ID:{$id} — {$title}");
+        $this->flash('articles', 'success:Artikel berhasil diperbarui.');
+        $this->redirect($this->adminBase() . '/articles');
+    }
+
+    public function toggleArticle(array $params = []): void
+    {
+        Auth::requireAuth();
+        Security::requireCsrf();
+        $id        = (int)($_POST['id'] ?? 0);
+        $newStatus = (new Article())->toggleStatus($id);
+        $this->log('ARTICLE_TOGGLE', "ID:{$id} -> " . ($newStatus ?? 'unknown'));
+        $this->json(['success' => $newStatus !== null, 'status' => $newStatus]);
+    }
+
+    public function deleteArticle(array $params = []): void
+    {
+        Auth::requireAuth();
+        Security::requireCsrf();
+        $id           = (int)($_POST['id'] ?? 0);
+        $articleModel = new Article();
+        $article      = $articleModel->find($id);
+
+        if ($article) {
+            $this->deleteLocalArticleThumbnail($article['thumbnail_url'] ?? '');
+            $articleModel->delete($id);
+            $this->log('ARTICLE_DELETE', "ID:{$id} — " . ($article['title'] ?? ''));
+        }
+
+        $this->json(['success' => true]);
+    }
+
+    public function toggleArticleComment(array $params = []): void
+    {
+        Auth::requireAuth();
+        Security::requireCsrf();
+        $id = (int)($_POST['id'] ?? 0);
+        (new ArticleComment())->toggle($id);
+        $this->json(['success' => true]);
+    }
+
+    public function deleteArticleComment(array $params = []): void
+    {
+        Auth::requireAuth();
+        Security::requireCsrf();
+        $id = (int)($_POST['id'] ?? 0);
+        (new ArticleComment())->delete($id);
+        $this->log('ARTICLE_COMMENT_DELETE', "ID:{$id}");
+        $this->json(['success' => true]);
+    }
+
     // ─── Comments ───────────────────────────────────────────────────────────
 
     public function comments(array $params = []): void
     {
         Auth::requireAuth();
+        $activeTab       = ($_GET['tab'] ?? '') === 'artikel' ? 'artikel' : 'main';
+        $filterArticleId = isset($_GET['article_id']) ? (int)$_GET['article_id'] : null;
+
         $this->view('admin.comments', [
-            'comments'  => (new Comment())->allAdmin(),
-            'csrfToken' => Security::csrfToken(),
-            'adminBase' => $this->adminBase(),
+            'comments'        => (new Comment())->allAdmin(),
+            'articleComments' => (new ArticleComment())->allAdmin($filterArticleId),
+            'activeTab'       => $activeTab,
+            'filterArticleId' => $filterArticleId,
+            'csrfToken'       => Security::csrfToken(),
+            'adminBase'       => $this->adminBase(),
         ], 'admin');
     }
 
@@ -570,6 +878,14 @@ class AdminController extends Controller
                 $db->execute("TRUNCATE TABLE card_clicks");
                 $this->log('DB_CLEANUP', "Truncate log klik card");
                 $this->flash('settings', 'success:Semua data riwayat klik kartu berhasil direset.');
+            } elseif ($type === 'article_views_30d') {
+                $count = $db->execute("DELETE FROM article_views WHERE viewed_at < DATE_SUB(NOW(), INTERVAL 30 DAY)");
+                $this->log('DB_CLEANUP', "Pembersihan log pembaca artikel >30 hari ({$count} baris)");
+                $this->flash('settings', "success:Berhasil membersihkan {$count} baris log pembaca artikel >30 hari (total angka pembaca tetap tersimpan).");
+            } elseif ($type === 'article_views_all') {
+                $db->execute("TRUNCATE TABLE article_views");
+                $this->log('DB_CLEANUP', "Truncate log deduplikasi pembaca artikel");
+                $this->flash('settings', 'success:Log deduplikasi pembaca artikel telah dikosongkan (total pembaca pada artikel tetap terjaga).');
             } else {
                 $this->flash('settings', 'error:Opsi pembersihan tidak valid.');
             }
@@ -588,6 +904,7 @@ class AdminController extends Controller
         // Regular text fields
         $textFields = [
             'footer_text','gallery_title','gallery_subtitle',
+            'article_title','article_subtitle',
             'ad_image_url','ad_title','ad_description',
             'ad_target_url','ad_button_text',
             'maintenance_countdown', 'seo_title', 'seo_description', 'seo_og_image',

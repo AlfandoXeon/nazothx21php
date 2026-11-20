@@ -93,6 +93,51 @@ CREATE TABLE IF NOT EXISTS card_clicks (
   FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE
 );
 
+-- Articles (Artikel By Nazo)
+CREATE TABLE IF NOT EXISTS articles (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(200) NOT NULL,
+  slug VARCHAR(220) NOT NULL,
+  excerpt VARCHAR(350) DEFAULT '',
+  content LONGTEXT NOT NULL,
+  thumbnail_url VARCHAR(500) DEFAULT '',
+  category VARCHAR(80) DEFAULT 'Umum',
+  status ENUM('published', 'draft') NOT NULL DEFAULT 'published',
+  views_count INT UNSIGNED NOT NULL DEFAULT 0,
+  published_at DATETIME DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_articles_slug (slug),
+  INDEX idx_articles_status_pub (status, published_at),
+  INDEX idx_articles_category (category)
+);
+
+-- Article Views Log (Deduplicated per IP)
+CREATE TABLE IF NOT EXISTS article_views (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  article_id INT NOT NULL,
+  ip_address VARCHAR(45) NOT NULL,
+  user_agent VARCHAR(500) DEFAULT NULL,
+  viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_av_article_ip_time (article_id, ip_address, viewed_at),
+  INDEX idx_av_viewed_at (viewed_at),
+  FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE
+);
+
+-- Article Comments
+CREATE TABLE IF NOT EXISTS article_comments (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  article_id INT NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  message TEXT NOT NULL,
+  is_approved TINYINT(1) NOT NULL DEFAULT 1,
+  ip_address VARCHAR(45) DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_ac_article_approved (article_id, is_approved, created_at),
+  INDEX idx_ac_ip_created (ip_address, created_at),
+  FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE
+);
+
 -- Initial Essential Keys & Default Profile (No seed cards/comments)
 INSERT IGNORE INTO profile (id, name, role, bio, avatar_url) VALUES
   (1, 'NAZO ナゾ', 'MLBB CONTENT CREATOR', '', '/Foto/fotoProfileNazo.png');
@@ -101,6 +146,8 @@ INSERT IGNORE INTO settings (`key`, `value`) VALUES
   ('footer_text', ''),
   ('gallery_title', 'Gallery'),
   ('gallery_subtitle', ''),
+  ('article_title', 'Artikel By Nazo'),
+  ('article_subtitle', 'Tulisan, panduan, dan catatan terbaru dari Nazo.'),
   ('ad_enabled', '0'),
   ('ad_title', ''),
   ('ad_description', ''),

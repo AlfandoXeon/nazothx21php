@@ -14,15 +14,17 @@
 </div>
 
 <!-- Stat Cards -->
-<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
     <?php
     $stats = [
-        ['label'=>'Total Kunjungan', 'value'=>$totalVisitors ?? 0, 'icon'=>'users'],
-        ['label'=>'Hari Ini',        'value'=>$todayVisitors ?? 0, 'icon'=>'user-check'],
-        ['label'=>'Klik Link',       'value'=>$totalClicks ?? 0,   'icon'=>'mouse-pointer'],
-        ['label'=>'Active Cards',    'value'=>$totalCards,         'icon'=>'link-2'],
+        ['label'=>'Total Kunjungan', 'value'=>$totalVisitors ?? 0,     'icon'=>'users'],
+        ['label'=>'Hari Ini',        'value'=>$todayVisitors ?? 0,     'icon'=>'user-check'],
+        ['label'=>'Klik Link',       'value'=>$totalClicks ?? 0,       'icon'=>'mouse-pointer'],
+        ['label'=>'Pembaca Artikel', 'value'=>$totalArticleViews ?? 0, 'icon'=>'eye'],
+        ['label'=>'Total Artikel',   'value'=>$totalArticles ?? 0,     'icon'=>'file-text'],
+        ['label'=>'Active Cards',    'value'=>$totalCards,             'icon'=>'link-2'],
         ['label'=>'Media Gallery',   'value'=>$totalPhotos + $totalVideos, 'icon'=>'image'],
-        ['label'=>'Komentar',        'value'=>$totalComments,      'icon'=>'message-square'],
+        ['label'=>'Total Komentar',  'value'=>$totalComments,          'icon'=>'message-square'],
     ];
     foreach ($stats as $stat):
     ?>
@@ -124,12 +126,13 @@
 </div>
 
 <!-- Quick Actions -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
     <?php
     $actions = [
-        ['href'=>$adminBase.'/cards',    'icon'=>'plus-circle',  'label'=>'Kelola Cards & Link'],
-        ['href'=>$adminBase.'/gallery',  'icon'=>'upload-cloud', 'label'=>'Upload Gallery'],
-        ['href'=>$adminBase.'/settings', 'icon'=>'sliders',      'label'=>'Konfigurasi Website'],
+        ['href'=>$adminBase.'/articles/create', 'icon'=>'file-plus-2',  'label'=>'Tulis Artikel Baru'],
+        ['href'=>$adminBase.'/cards',           'icon'=>'plus-circle',  'label'=>'Kelola Cards & Link'],
+        ['href'=>$adminBase.'/gallery',         'icon'=>'upload-cloud', 'label'=>'Upload Gallery'],
+        ['href'=>$adminBase.'/settings',        'icon'=>'sliders',      'label'=>'Konfigurasi Website'],
     ];
     foreach ($actions as $a):
     ?>
@@ -143,22 +146,61 @@
     <?php endforeach; ?>
 </div>
 
-<!-- Activity Log -->
-<div class="bg-dark-800 border border-white/5 rounded-2xl p-6">
-    <h2 class="font-condensed font-bold text-lg text-white tracking-wide mb-4">Aktivitas Terbaru</h2>
-    <?php if (empty($logs)): ?>
-    <p class="text-gray-700 text-sm text-center py-4">Belum ada aktivitas.</p>
-    <?php else: ?>
-    <div class="space-y-2">
-        <?php foreach ($logs as $log): ?>
-        <div class="flex items-center gap-4 py-2.5 border-b border-white/5 last:border-0">
-            <div class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background:#f59e0b"></div>
-            <span class="text-sm text-gray-400 flex-1"><?= Security::e($log['action']) ?>
-                <?php if ($log['detail']): ?><span class="text-gray-600 text-xs ml-1"><?= Security::e($log['detail']) ?></span><?php endif; ?>
-            </span>
-            <span class="text-xs text-gray-700 flex-shrink-0"><?= date('d/m H:i', strtotime($log['created_at'])) ?></span>
+<!-- Top Articles & Activity Log -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- Top Articles -->
+    <div class="lg:col-span-5 bg-dark-800 border border-white/5 rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="font-condensed font-bold text-lg text-white tracking-wide">Artikel Terpopuler</h2>
+            <a href="<?= $adminBase ?>/articles" class="text-xs text-amber-500 hover:underline">Semua Artikel</a>
         </div>
-        <?php endforeach; ?>
+        <?php if (empty($topArticles)): ?>
+        <p class="text-gray-600 text-sm text-center py-6">Belum ada artikel.</p>
+        <?php else: ?>
+        <div class="space-y-3">
+            <?php foreach ($topArticles as $idx => $ta): ?>
+            <a href="<?= $adminBase ?>/articles/edit/<?= (int)$ta['id'] ?>"
+               class="flex items-center gap-3 p-2.5 rounded-xl bg-dark-700/60 border border-white/5 hover:border-amber-500/30 transition-all">
+                <span class="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold font-condensed <?= $idx === 0 ? 'bg-amber-500 text-black' : 'bg-white/10 text-gray-400' ?>">
+                    <?= $idx + 1 ?>
+                </span>
+                <div class="flex-1 min-w-0">
+                    <div class="text-sm font-semibold text-white truncate"><?= Security::e($ta['title']) ?></div>
+                    <div class="text-[11px] text-gray-500 flex items-center gap-2">
+                        <span><?= Security::e($ta['category'] ?? 'Umum') ?></span>
+                        <span>&bull;</span>
+                        <span class="<?= ($ta['status'] ?? '') === 'published' ? 'text-amber-400/80' : 'text-gray-600' ?>">
+                            <?= ($ta['status'] ?? '') === 'published' ? 'Published' : 'Draft' ?>
+                        </span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1 px-2 py-1 rounded-md bg-white/5 text-amber-400 text-xs font-semibold flex-shrink-0">
+                    <i data-lucide="eye" class="w-3 h-3"></i>
+                    <span><?= number_format((int)($ta['views_count'] ?? 0)) ?></span>
+                </div>
+            </a>
+            <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
     </div>
-    <?php endif; ?>
+
+    <!-- Activity Log -->
+    <div class="lg:col-span-7 bg-dark-800 border border-white/5 rounded-2xl p-6">
+        <h2 class="font-condensed font-bold text-lg text-white tracking-wide mb-4">Aktivitas Terbaru</h2>
+        <?php if (empty($logs)): ?>
+        <p class="text-gray-700 text-sm text-center py-4">Belum ada aktivitas.</p>
+        <?php else: ?>
+        <div class="space-y-2">
+            <?php foreach ($logs as $log): ?>
+            <div class="flex items-center gap-4 py-2.5 border-b border-white/5 last:border-0">
+                <div class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background:#f59e0b"></div>
+                <span class="text-sm text-gray-400 flex-1"><?= Security::e($log['action']) ?>
+                    <?php if ($log['detail']): ?><span class="text-gray-600 text-xs ml-1"><?= Security::e($log['detail']) ?></span><?php endif; ?>
+                </span>
+                <span class="text-xs text-gray-700 flex-shrink-0"><?= date('d/m H:i', strtotime($log['created_at'])) ?></span>
+            </div>
+            <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+    </div>
 </div>

@@ -3,6 +3,7 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Core\Security;
+use App\Models\Article;
 use App\Models\Profile;
 use App\Models\Card;
 use App\Models\SocialHeader;
@@ -33,13 +34,16 @@ class HomeController extends Controller
         $visitorLog = new VisitorLog();
         $visitorLog->record($_SERVER['REMOTE_ADDR'] ?? '', '/');
 
-        $profile      = (new Profile())->get();
-        $cards        = (new Card())->allActive();
-        $socials      = (new SocialHeader())->allOrdered();
-        $commentModel = new Comment();
-        $comments     = $commentModel->latestApproved(4);
-        $totalComments= $commentModel->countApproved();
-        $visitorCount = $visitorLog->totalCount();
+        $profile        = (new Profile())->get();
+        $cards          = (new Card())->allActive();
+        $socials        = (new SocialHeader())->allOrdered();
+        $articleModel   = new Article();
+        $latestArticles = $articleModel->allPublished(null, null, 3, 0);
+        $totalArticles  = $articleModel->countPublishedTotal();
+        $commentModel   = new Comment();
+        $comments       = $commentModel->latestApproved(4);
+        $totalComments  = $commentModel->countApproved();
+        $visitorCount   = $visitorLog->totalCount();
 
         // Ad popup
         $adEnabled = ($settings['ad_enabled'] ?? '0') === '1';
@@ -50,19 +54,21 @@ class HomeController extends Controller
         $seoOgImage = $settings['seo_og_image'] ?? '';
 
         $this->view('home.index', [
-            'profile'      => $profile,
-            'cards'        => $cards,
-            'socials'      => $socials,
-            'comments'     => $comments,
-            'totalComments'=> $totalComments,
-            'settings'     => $settings,
-            'adEnabled'    => $adEnabled,
-            'visitorCount' => $visitorCount,
-            'seoTitle'     => $seoTitle,
-            'seoDesc'      => $seoDesc,
-            'seoOgImage'   => $seoOgImage,
-            'flash'        => $this->getFlash('comment'),
-            'csrfToken'    => Security::csrfToken(),
+            'profile'        => $profile,
+            'cards'          => $cards,
+            'socials'        => $socials,
+            'latestArticles' => $latestArticles,
+            'totalArticles'  => $totalArticles,
+            'comments'       => $comments,
+            'totalComments'  => $totalComments,
+            'settings'       => $settings,
+            'adEnabled'      => $adEnabled,
+            'visitorCount'   => $visitorCount,
+            'seoTitle'       => $seoTitle,
+            'seoDesc'        => $seoDesc,
+            'seoOgImage'     => $seoOgImage,
+            'flash'          => $this->getFlash('comment'),
+            'csrfToken'      => Security::csrfToken(),
         ]);
     }
 

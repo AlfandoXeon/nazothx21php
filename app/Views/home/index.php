@@ -1,4 +1,5 @@
 <?php
+use App\Core\Markdown;
 use App\Core\Security;
 $base = rtrim($_ENV['APP_URL'] ?? '', '/');
 
@@ -156,6 +157,113 @@ if (empty($avatarUrl)) {
     </div>
     <?php endif; ?>
 </section>
+
+<!-- ── ARTIKEL TERBARU (HORIZONTAL SWIPE) ────────────────────── -->
+<?php if (!empty($latestArticles)):
+    $articleCount = count($latestArticles);
+?>
+<section id="artikel-terbaru" class="max-w-lg mx-auto px-4 pb-12">
+    <div class="flex items-center justify-between gap-3 mb-4" data-aos="fade-up">
+        <div>
+            <h2 class="font-condensed font-bold text-2xl tracking-widest text-white">ARTIKEL TERBARU</h2>
+            <div class="w-12 h-0.5 mt-1" style="background:#f59e0b"></div>
+        </div>
+        <?php if ($articleCount > 1): ?>
+        <div class="flex items-center gap-1.5">
+            <button type="button" id="article-prev-btn" aria-label="Geser ke kiri"
+                    class="w-8 h-8 rounded-lg flex items-center justify-center bg-dark-700 border border-white/10 text-gray-400 hover:text-amber-400 hover:border-amber-500/40 transition-all active:scale-95">
+                <i data-lucide="chevron-left" class="w-4 h-4"></i>
+            </button>
+            <button type="button" id="article-next-btn" aria-label="Geser ke kanan"
+                    class="w-8 h-8 rounded-lg flex items-center justify-center bg-dark-700 border border-white/10 text-gray-400 hover:text-amber-400 hover:border-amber-500/40 transition-all active:scale-95">
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>
+        </div>
+        <?php endif; ?>
+    </div>
+
+    <!-- Swipeable Horizontal Track -->
+    <div id="home-article-slider"
+         class="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar pb-2 -mx-1 px-1 cursor-grab active:cursor-grabbing"
+         data-aos="fade-up" data-aos-delay="50">
+        <?php foreach ($latestArticles as $art):
+            $artThumb   = Markdown::resolveMediaUrl($art['thumbnail_url'] ?? '', $base);
+            $artExcerpt = !empty($art['excerpt']) ? $art['excerpt'] : Markdown::excerpt($art['content'] ?? '', 95);
+            $artDate    = !empty($art['published_at']) ? $art['published_at'] : $art['created_at'];
+            $artReadMin = Markdown::readingTime($art['content'] ?? '');
+            $cardWidth  = $articleCount === 1 ? 'w-full' : 'w-[82%] sm:w-[272px]';
+        ?>
+        <a href="<?= $base ?>/artikel/<?= rawurlencode($art['slug']) ?>"
+           draggable="false"
+           class="article-slide-card link-card <?= $cardWidth ?> flex-shrink-0 snap-start flex flex-col rounded-xl overflow-hidden bg-dark-700 border border-white/5 hover:border-amber-500/40 group transition-all duration-200 select-none">
+
+            <!-- Compact Cover -->
+            <div class="relative h-32 bg-dark-800 overflow-hidden">
+                <?php if ($artThumb !== ''): ?>
+                <img src="<?= htmlspecialchars($artThumb) ?>"
+                     alt="<?= Security::e($art['title']) ?>"
+                     loading="lazy"
+                     draggable="false"
+                     class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                     onerror="this.parentElement.innerHTML='<div class=\'w-full h-full flex items-center justify-center bg-gradient-to-br from-dark-700 to-dark-900 text-amber-500/35 font-condensed font-extrabold text-2xl tracking-widest\'>NAZO.</div>'">
+                <?php else: ?>
+                <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-dark-700 via-dark-800 to-dark-900 border-b border-white/5">
+                    <span class="font-condensed font-extrabold text-2xl tracking-widest text-white/15">NAZO<span class="text-amber-500/40">.</span></span>
+                    <span class="text-[9px] uppercase tracking-[0.25em] text-amber-500/50 mt-0.5">Artikel</span>
+                </div>
+                <?php endif; ?>
+
+                <?php if (!empty($art['category'])): ?>
+                <span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-sm border border-amber-500/30 text-[10px] font-semibold uppercase tracking-wider text-amber-400">
+                    <?= Security::e($art['category']) ?>
+                </span>
+                <?php endif; ?>
+
+                <span class="absolute top-2.5 right-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-sm text-[10px] text-gray-300">
+                    <i data-lucide="eye" class="w-3 h-3 text-amber-400"></i>
+                    <?= number_format((int)($art['views_count'] ?? 0)) ?>
+                </span>
+            </div>
+
+            <!-- Compact Content -->
+            <div class="p-3.5 flex-1 flex flex-col">
+                <div class="flex items-center gap-2 text-[11px] text-gray-500 mb-1.5">
+                    <span><?= htmlspecialchars(date('d M Y', strtotime($artDate))) ?></span>
+                    <span>&bull;</span>
+                    <span><?= $artReadMin ?> mnt baca</span>
+                </div>
+                <h3 class="font-condensed font-bold text-base text-white group-hover:text-amber-400 transition-colors leading-snug line-clamp-2 mb-1.5">
+                    <?= Security::e($art['title']) ?>
+                </h3>
+                <p class="text-xs text-gray-500 leading-relaxed line-clamp-2 flex-1">
+                    <?= Security::e($artExcerpt) ?>
+                </p>
+            </div>
+        </a>
+        <?php endforeach; ?>
+    </div>
+
+    <!-- Dots Indicator & CTA Button -->
+    <div class="mt-3 flex items-center justify-between gap-3" data-aos="fade-up" data-aos-delay="80">
+        <?php if ($articleCount > 1): ?>
+        <div id="article-slider-dots" class="flex items-center gap-1.5">
+            <?php for ($d = 0; $d < $articleCount; $d++): ?>
+            <button type="button" data-slide-index="<?= $d ?>" aria-label="Artikel <?= $d + 1 ?>"
+                    class="article-dot h-1.5 rounded-full transition-all duration-200 <?= $d === 0 ? 'w-5 bg-amber-500' : 'w-1.5 bg-white/20 hover:bg-white/40' ?>"></button>
+            <?php endfor; ?>
+        </div>
+        <?php else: ?>
+        <div></div>
+        <?php endif; ?>
+
+        <a href="<?= $base ?>/artikel"
+           class="inline-flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 font-semibold px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/25 hover:border-amber-500/45 transition-all">
+            <span>Baca Semua Artikel<?= !empty($totalArticles) ? ' (' . (int)$totalArticles . ')' : '' ?></span>
+            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+        </a>
+    </div>
+</section>
+<?php endif; ?>
 
 <!-- ── KOMENTAR PREVIEW ──────────────────────────────────────── -->
 <section id="komentar" class="max-w-lg mx-auto px-4 pb-16">
@@ -318,6 +426,86 @@ function fallbackCopy(text, cb) {
         }
     }
     requestAnimationFrame(updateCount);
+})();
+
+// Horizontal Article Carousel (Home Page)
+(function() {
+    const slider = document.getElementById('home-article-slider');
+    if (!slider) return;
+
+    const cards   = slider.querySelectorAll('.article-slide-card');
+    const dots    = document.querySelectorAll('#article-slider-dots .article-dot');
+    const prevBtn = document.getElementById('article-prev-btn');
+    const nextBtn = document.getElementById('article-next-btn');
+
+    function getStep() {
+        if (!cards.length) return 280;
+        return cards[0].offsetWidth + 12; // width + gap-3 (12px)
+    }
+
+    function updateDots() {
+        if (!dots.length || !cards.length) return;
+        const step  = getStep();
+        const index = Math.max(0, Math.min(cards.length - 1, Math.round(slider.scrollLeft / step)));
+        dots.forEach((dot, idx) => {
+            if (idx === index) {
+                dot.classList.add('w-5', 'bg-amber-500');
+                dot.classList.remove('w-1.5', 'bg-white/20');
+            } else {
+                dot.classList.remove('w-5', 'bg-amber-500');
+                dot.classList.add('w-1.5', 'bg-white/20');
+            }
+        });
+    }
+
+    prevBtn?.addEventListener('click', () => {
+        slider.scrollBy({ left: -getStep(), behavior: 'smooth' });
+    });
+
+    nextBtn?.addEventListener('click', () => {
+        slider.scrollBy({ left: getStep(), behavior: 'smooth' });
+    });
+
+    dots.forEach((dot) => {
+        dot.addEventListener('click', () => {
+            const idx = parseInt(dot.getAttribute('data-slide-index') || '0', 10);
+            slider.scrollTo({ left: idx * getStep(), behavior: 'smooth' });
+        });
+    });
+
+    let scrollTimer = null;
+    slider.addEventListener('scroll', () => {
+        if (scrollTimer) cancelAnimationFrame(scrollTimer);
+        scrollTimer = requestAnimationFrame(updateDots);
+    }, { passive: true });
+
+    // Mouse drag-to-scroll for desktop convenience
+    let isDown = false, startX = 0, startScrollLeft = 0, moved = false;
+    slider.addEventListener('mousedown', (e) => {
+        isDown = true;
+        moved = false;
+        startX = e.pageX - slider.offsetLeft;
+        startScrollLeft = slider.scrollLeft;
+    });
+    window.addEventListener('mouseup', () => { isDown = false; });
+    slider.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+        const x    = e.pageX - slider.offsetLeft;
+        const walk = x - startX;
+        if (Math.abs(walk) > 6) moved = true;
+        if (moved) {
+            e.preventDefault();
+            slider.scrollLeft = startScrollLeft - walk;
+        }
+    });
+    cards.forEach((card) => {
+        card.addEventListener('click', (e) => {
+            if (moved) {
+                e.preventDefault();
+                moved = false;
+            }
+        });
+    });
 })();
 
 // Front-End Validation untuk Komentar

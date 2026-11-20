@@ -51,6 +51,9 @@ $router = new Router();
 // Public Routes
 $router->get('', 'HomeController@index');
 $router->get('gallery', 'GalleryController@index');
+$router->get('artikel', 'ArticleController@index');
+$router->get('artikel/:slug', 'ArticleController@show');
+$router->post('artikel/:slug/komentar', 'ArticleController@storeComment');
 $router->get('komentar', 'HomeController@comments');
 $router->post('komentar', 'HomeController@storeComment');
 $router->get('go/:id', 'HomeController@redirectCard');
@@ -74,6 +77,17 @@ $router->post($adminRoute . '/cards/reorder', 'AdminController@reorderCards');
 $router->get($adminRoute . '/gallery', 'AdminController@gallery');
 $router->post($adminRoute . '/gallery/upload', 'AdminController@uploadGallery');
 $router->post($adminRoute . '/gallery/delete', 'AdminController@deleteGallery');
+
+// Admin - Articles
+$router->get($adminRoute . '/articles', 'AdminController@articles');
+$router->get($adminRoute . '/articles/create', 'AdminController@createArticle');
+$router->post($adminRoute . '/articles/store', 'AdminController@storeArticle');
+$router->get($adminRoute . '/articles/edit/:id', 'AdminController@editArticle');
+$router->post($adminRoute . '/articles/update', 'AdminController@updateArticle');
+$router->post($adminRoute . '/articles/toggle', 'AdminController@toggleArticle');
+$router->post($adminRoute . '/articles/delete', 'AdminController@deleteArticle');
+$router->post($adminRoute . '/articles/comments/toggle', 'AdminController@toggleArticleComment');
+$router->post($adminRoute . '/articles/comments/delete', 'AdminController@deleteArticleComment');
 
 // Admin - Comments
 $router->get($adminRoute . '/comments', 'AdminController@comments');

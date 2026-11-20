@@ -191,6 +191,10 @@ $pageUrl   = htmlspecialchars($base . ($_SERVER['REQUEST_URI'] ?? '/'));
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--amber); }
 
+        /* Hidden scrollbar for horizontal carousels */
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+
         /* Tab active */
         .tab-btn.active {
             color: var(--amber);
